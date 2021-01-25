@@ -1,0 +1,12 @@
+.MyListings {
+  height: 100%;
+  overflow: auto;
+}
+
+.Listings {
+  padding-left: 80px;
+  padding-top: 50px;
+  padding-bottom: 50px;
+  padding-right: 20%;
+  overflow: auto;
+}

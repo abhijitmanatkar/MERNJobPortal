@@ -1,0 +1,16 @@
+.Navbar {
+  color: white;
+  background: rgb(129, 1, 129);
+  /*
+  background: linear-gradient(
+    90deg,
+    rgba(77, 174, 236, 1) 240px,
+    rgba(255, 0, 254, 1) 1200px
+  );
+  */
+}
+
+.NB {
+  color: white;
+  background-color: rgb(143, 1, 143);
+}

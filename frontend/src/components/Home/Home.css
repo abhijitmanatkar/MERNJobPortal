@@ -1,0 +1,25 @@
+.Home {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 600px;
+  grid-template-rows: 1;
+}
+
+.Home-left {
+  grid-column: 1 / 2;
+  background: rgb(77, 174, 236);
+  background: linear-gradient(
+    90deg,
+    rgba(77, 174, 236, 1) 240px,
+    rgba(255, 0, 254, 1) 1200px
+  );
+}
+
+.Home-right {
+  padding-left: 20%;
+  padding-right: 20%;
+  padding-top: 30%;
+  grid-column: 2 / 3;
+}
