@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Typography from "@material-ui/core/Typography";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import Radio from "@material-ui/core/Radio";
@@ -16,7 +16,9 @@ import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import Rating from "@material-ui/lab/Rating";
 import Navbar from "../Navbar/Navbar";
-
+import axios from "axios";
+import swal from "sweetalert";
+import { AuthContext } from "../../App";
 import "./AcceptedEmployees.css";
 
 const toDt = (dt) => {
@@ -76,7 +78,7 @@ const application = {
   title: "Job Title",
 };
 
-const rows = [application, application, application, application];
+const defaultRows = [application, application, application, application];
 
 const defaultSort = {
   sortField: "name",
@@ -85,6 +87,92 @@ const defaultSort = {
 
 function AcceptedEmployees() {
   const [sort, setSort] = useState(defaultSort);
+  const [rows, setRows] = useState([]);
+  const { auth, setAuth } = React.useContext(AuthContext);
+
+  const getEmployees = async function () {
+    try {
+      // Get from backend
+      let applicants = await axios.get(
+        `/api/applicant/byrecruiter/${auth.user._id}`
+      );
+      applicants = applicants.data.applicants;
+
+      let ratings = await axios.get(
+        `/api/rating/applicant/byrecruiter/${auth.user._id}`
+      );
+      ratings = ratings.data.ratings;
+
+      applicants = applicants.map((applicant) => {
+        let myRating = ratings.find((r) => r.applicantId === applicant.id);
+        if (myRating) applicant.myRating = myRating.value;
+        else applicant.myRating = 0;
+        return applicant;
+      });
+      //Sort
+      applicants.sort((a, b) =>
+        a[sort.sortField] < b[sort.sortField]
+          ? sort.sortOrder === "ascending"
+            ? -1
+            : 1
+          : sort.sortOrder === "ascending"
+          ? 1
+          : -1
+      );
+      console.log(applicants);
+      setRows(applicants);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateMyRatingLocal = (row, newRating) => {
+    let newRows = rows.map((r) => {
+      if (r.id === row.id) r.myRating = newRating;
+      return r;
+    });
+    setRows(newRows);
+  };
+
+  const updateMyRating = (row, newRating) => {
+    let oldRating = row.myRating;
+    updateMyRatingLocal(row, newRating);
+    let url = "/api/rating/applicant";
+    let data = {
+      value: newRating,
+      applicantId: row.id,
+      recruiterId: auth.user._id,
+    };
+    let config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": localStorage.getItem("token"),
+      },
+    };
+    axios
+      .post(url, data, config)
+      .then((response) => {
+        swal("Rating changed", "", "success").then(() => getEmployees());
+      })
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.data) {
+            if (error.response.data.msg) {
+              swal("Error", error.response.data.msg, "error").then(() =>
+                updateMyRatingLocal(row, oldRating)
+              );
+            }
+          }
+        } else {
+          swal("Error", "Something went wrong", "error").then(() =>
+            updateMyRatingLocal(row, oldRating)
+          );
+        }
+      });
+  };
+
+  useEffect(getEmployees, []);
+  //useEffect(getEmployees, [sort]);
 
   const onSortChange = (e) => {
     setSort({
@@ -133,10 +221,18 @@ function AcceptedEmployees() {
               variant="contained"
               color="primary"
               style={{ marginRight: 10 }}
+              onClick={getEmployees}
             >
               Apply
             </Button>
-            <Button variant="contained" color="secondary">
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                setSort(defaultSort);
+                //getEmployees();
+              }}
+            >
               Reset
             </Button>
           </div>
@@ -161,11 +257,12 @@ function AcceptedEmployees() {
                   <TableCell align="right">Job Type</TableCell>
                   <TableCell align="right">Job Title</TableCell>
                   <TableCell align="right">Rating</TableCell>
+                  <TableCell align="right">Rate</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.map((row) => (
-                  <TableRow key={row.name}>
+                  <TableRow key={row.id}>
                     <TableCell component="th" scope="row">
                       {row.name}
                     </TableCell>
@@ -173,7 +270,16 @@ function AcceptedEmployees() {
                     <TableCell align="right">{row.jobType}</TableCell>
                     <TableCell align="right">{row.title}</TableCell>
                     <TableCell align="right">
-                      <Rating value={row.rating} />
+                      <Rating readOnly value={row.rating} precision={0.25} />
+                    </TableCell>
+                    <TableCell>
+                      <Rating
+                        name={row.id}
+                        value={row.myRating}
+                        onChange={(e, newRating) =>
+                          updateMyRating(row, newRating)
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

@@ -41,12 +41,13 @@ router.post("/", (req, res) => {
               jwt.sign(
                 { id: newUser.id, type: "Recruiter" },
                 jwtSecret,
-                { expiresIn: 600 },
+                { expiresIn: 3600 },
                 (err, token) => {
                   if (err) throw err;
                   res.json({
                     token,
                     user: userToSend,
+                    userType: "Recruiter",
                   });
                 }
               );

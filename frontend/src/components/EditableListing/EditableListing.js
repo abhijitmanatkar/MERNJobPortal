@@ -71,6 +71,35 @@ function EditableListing(props) {
     });
   };
 
+  const deleteListing = () => {
+    let url = `/api/listing/${listing._id}`;
+    let config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": localStorage.getItem("token"),
+      },
+    };
+    axios
+      .delete(url, config)
+      .then((response) => {
+        swal("Listing deleted successfully", "", "success").then(() =>
+          location.reload()
+        );
+      })
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.data) {
+            if (error.response.data.msg) {
+              swal("Error", error.response.data.msg, "error");
+            }
+          }
+        } else {
+          console.log(error);
+          swal("Error", "Something went wrong", "error");
+        }
+      });
+  };
+
   const updateListing = () => {
     let url = `/api/listing/${listing._id}`;
     let config = {
@@ -223,6 +252,7 @@ function EditableListing(props) {
             }}
             variant="contained"
             color="secondary"
+            onClick={deleteListing}
           >
             Delete
           </Button>
@@ -291,7 +321,7 @@ function EditableListing(props) {
           variant="h4"
           style={{ color: "lightgreen", marginBottom: 0 }}
         >
-          ${listing.salary}
+          ₹{listing.salary}
         </Typography>
         {editables()}
       </CardContent>

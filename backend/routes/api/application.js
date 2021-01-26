@@ -21,7 +21,16 @@ router.post("/", auth("Applicant"), async function (req, res) {
   if (!applicant || !listing) return res.sendStatus(400);
 
   const applicantApplications = await Application.find({ applicantId });
-  if (applicantApplications.length >= 10)
+  let numActive = 0;
+  for (let application of applicantApplications) {
+    if (application.status === "Accepted")
+      return res
+        .status(400)
+        .json({ msg: "Can't apply when already accepted into a job" });
+    if (application.status !== "Deleted" || application.status !== "Rejected")
+      numActive += 1;
+  }
+  if (numActive >= 10)
     return res.status(400).json({ msg: "Can't apply to more than 10 jobs" });
 
   if (listing.deadlineDate < Date.now())
@@ -66,6 +75,19 @@ router.get("/bylisting/:listingid", (req, res) => {
     });
 });
 
+// Get applications by recruiter
+router.get("/byrecruiter/:recruiterid", async function (req, res) {
+  try {
+    const recruiterId = req.params.recruiterid;
+    let listings = await Listing.find({ "recruiter.id": recruiterId });
+    listings = listings.map((listing) => listing.id);
+    let applications = await Application.find({ listingId: { $in: listings } });
+    return res.json({ applications });
+  } catch {
+    return res.status(500).json({ msg: "Internal error" });
+  }
+});
+
 // Update application
 router.put("/:id", auth("Recruiter"), async function (req, res) {
   const id = req.params.id;
@@ -102,7 +124,8 @@ router.put("/:id", auth("Recruiter"), async function (req, res) {
     await listing.save();
   }
   application.status = status;
-  application.closeDate = Date.now();
+  if (status === "Accepted" || status === "Rejected")
+    application.closeDate = Date.now();
   const updatedApplication = await application.save();
   res.json({ application: updatedApplication });
 });

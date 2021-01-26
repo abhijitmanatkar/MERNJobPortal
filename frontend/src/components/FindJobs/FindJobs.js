@@ -25,8 +25,8 @@ const defaultFilters = {
   wfh: true,
   partTime: true,
   fullTime: true,
-  salaryRange: [0, 10000],
-  maxDuration: 6,
+  salaryRange: [0, 100000000],
+  maxDuration: 7,
   sortField: "salary",
   sortOrder: "descending",
 };
@@ -34,6 +34,7 @@ const defaultFilters = {
 function FindJobs() {
   const [filters, setFilters] = useState(defaultFilters);
   const [listings, setListings] = useState([]);
+  const [maxSalary, setMaxSalary] = useState(10000);
   const { auth, setAuth } = React.useContext(AuthContext);
 
   const getRating = (listing) => {
@@ -41,16 +42,23 @@ function FindJobs() {
     else return listing.ratingSum / listing.numRatings;
   };
 
+  useEffect(() => {
+    setFilters({
+      ...filters,
+      salaryRange: [filters.salaryRange[0], maxSalary + 1000],
+    });
+  }, [maxSalary]);
+
   const fetchJobs = async function () {
     try {
       let allListings = await axios.get("/api/listing");
       allListings = allListings.data.listings;
-      console.log(allListings);
 
       allListings = allListings.filter((listing) => {
         let d = new Date(listing.deadlineDate);
-        return d.getTime() > Date.now();
+        return d.getTime() > Date.now() && !listing.deleted;
       });
+      setMaxSalary(Math.max(...allListings.map((l) => l.salary), 0));
 
       let myApplications = await axios.get(
         `/api/application/byapplicant/${auth.user._id}`
@@ -58,11 +66,14 @@ function FindJobs() {
       let listingsAppliedTo = myApplications.data.applications.map(
         (application) => application.listingId
       );
-      console.log(allListings);
+
       // Filters
       let filteredListings = allListings.filter((listing) => {
         return (
-          listing.title.indexOf(filters.searchTerm) !== -1 &&
+          listing.title
+            .trim()
+            .toLowerCase()
+            .indexOf(filters.searchTerm.trim().toLowerCase()) !== -1 &&
           listing.salary <= filters.salaryRange[1] &&
           listing.salary >= filters.salaryRange[0] &&
           listing.duration < filters.maxDuration &&
@@ -127,6 +138,7 @@ function FindJobs() {
   };
 
   const onSalaryRangeChange = (e, newValue) => {
+    console.log(newValue);
     setFilters({
       ...filters,
       salaryRange: newValue,
@@ -200,11 +212,17 @@ function FindJobs() {
               valueLabelDisplay="auto"
               aria-labelledby="range-slider"
               min={0}
-              max={10000}
+              max={maxSalary + 1000}
               marks={[
                 { value: 0, label: "0" },
-                { value: 5000, label: "5000" },
-                { value: 10000, label: "10000" },
+                {
+                  value: (maxSalary + 1000) / 2,
+                  label: ((maxSalary + 1000) / 2).toString(),
+                },
+                {
+                  value: maxSalary + 1000,
+                  label: (maxSalary + 1000).toString(),
+                },
               ]}
             />
           </FormControl>
@@ -267,7 +285,11 @@ function FindJobs() {
             >
               Apply
             </Button>
-            <Button variant="contained" color="secondary">
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setFilters(defaultFilters)}
+            >
               Reset
             </Button>
           </div>

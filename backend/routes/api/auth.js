@@ -31,7 +31,7 @@ router.post("/applicant", (req, res) => {
         jwt.sign(
           { id: user.id, type: "Applicant" },
           jwtSecret,
-          { expiresIn: 600 },
+          { expiresIn: 3600 },
           (err, token) => {
             if (err) throw err;
             res.json({
@@ -67,7 +67,7 @@ router.post("/recruiter", (req, res) => {
         jwt.sign(
           { id: user.id, type: "Recruiter" },
           jwtSecret,
-          { expiresIn: 600 },
+          { expiresIn: 3600 },
           (err, token) => {
             if (err) throw err;
             res.json({

@@ -21,7 +21,7 @@ function auth(userType) {
       const decoded = jwt.verify(token, jwtSecret);
       // Add user from payload
       req.user = decoded;
-      console.log(req.user);
+      //console.log(req.user);
       if (req.user.type != userType)
         return res.status(400).json({ msg: "Invalid token" });
       next();

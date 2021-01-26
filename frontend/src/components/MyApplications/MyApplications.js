@@ -12,6 +12,7 @@ import Navbar from "../Navbar/Navbar";
 import "./MyApplications.css";
 import axios from "axios";
 import { AuthContext } from "../../App";
+import swal from "sweetalert";
 
 const toDt = (dt) => {
   if (!dt) return "--";
@@ -37,6 +38,7 @@ const rateButton = (row) => {
     return (
       <Rating
         value={row.rating}
+        name={row.id}
         onChange={(e, newValue) => {
           row.rating = newValue;
         }}
@@ -69,7 +71,7 @@ const defaultRows = [
     closureDate: 1611149627670,
   },
   {
-    title: "Jobbbbbb",
+    title: "JobbbNiggabbb",
     recruiterName: "XYZ recruiter",
     status: "Accepted",
     salary: 2000,
@@ -81,6 +83,51 @@ const defaultRows = [
 function MyApplications() {
   const [rows, setRows] = useState([]);
   const { auth, setAuth } = React.useContext(AuthContext);
+
+  const updateRatingLocal = (row, newRating) => {
+    let newRows = rows.map((r) => {
+      if (r.id === row.id) r.rating = newRating;
+      return r;
+    });
+    setRows(newRows);
+  };
+
+  const updateRating = (row, newRating) => {
+    let oldRating = row.rating;
+    updateRatingLocal(row, newRating);
+    let url = "/api/rating/listing";
+    let data = {
+      value: newRating,
+      listingId: row.listingId,
+      applicantId: auth.user._id,
+    };
+    let config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": localStorage.getItem("token"),
+      },
+    };
+    axios
+      .post(url, data, config)
+      .then((response) => {
+        swal("Rating changed", "", "success");
+      })
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.data) {
+            if (error.response.data.msg) {
+              swal("Error", error.response.data.msg, "error").then(() =>
+                updateRatingLocal(row, oldRating)
+              );
+            }
+          }
+        } else {
+          swal("Error", "Something went wrong", "error").then(() =>
+            updateRatingLocal(row, oldRating)
+          );
+        }
+      });
+  };
 
   useEffect(async function () {
     try {
@@ -98,18 +145,32 @@ function MyApplications() {
         (listing) => appliedListingIds.indexOf(listing._id) !== -1
       );
 
+      let ratings = await axios.get(
+        `/api/rating/listing/byapplicant/${auth.user._id}`
+      );
+      ratings = ratings.data.ratings;
+      //console.log(ratings);
+
       let rows = applications.map((application) => {
         let listing = listings.find((l) => l._id === application.listingId);
+        let rating = 0;
+        if (ratings) rating = ratings.find((r) => r.listingId === listing._id);
+        console.log(rating);
         let row = {
+          id: application._id,
           title: listing.title,
           recruiterName: listing.recruiter.name,
           status: application.status,
           salary: listing.salary,
-          closureDate: application.closureDate,
+          closeDate: application.closeDate,
+          rating: rating ? rating.value : 0,
+          listingId: listing._id,
+          /*
           rating:
             listing.numRatings === 0
               ? 0
               : listing.ratingSum / listing.numRatings,
+          */
         };
         return row;
       });
@@ -142,7 +203,7 @@ function MyApplications() {
             </TableHead>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.name}>
+                <TableRow key={row.id}>
                   <TableCell component="th" scope="row">
                     {row.title}
                   </TableCell>
@@ -153,9 +214,23 @@ function MyApplications() {
                   >
                     {row.status}
                   </TableCell>
-                  <TableCell align="right">{row.salary}</TableCell>
-                  <TableCell align="right">{toDt(row.closureDate)}</TableCell>
-                  <TableCell align="right">{rateButton(row)}</TableCell>
+                  <TableCell align="right">₹{row.salary}</TableCell>
+                  <TableCell align="right">
+                    {row.status === "Accepted" ? toDt(row.closeDate) : "--"}
+                  </TableCell>
+                  <TableCell align="right">
+                    {row.status === "Accepted" ? (
+                      <Rating
+                        value={row.rating}
+                        name={row.id}
+                        onChange={(e, newRating) =>
+                          updateRating(row, newRating)
+                        }
+                      />
+                    ) : (
+                      "--"
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

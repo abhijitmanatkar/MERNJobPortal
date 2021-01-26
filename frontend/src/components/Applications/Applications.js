@@ -42,37 +42,7 @@ const getColor = (status) => {
   }
 };
 
-const actionButtons = (row) => {
-  if (row.status === "Applied") {
-    return (
-      <>
-        <Button variant="contained" color="primary">
-          Shortlist
-        </Button>
-        <Button variant="contained" color="secondary">
-          Reject
-        </Button>
-      </>
-    );
-  } else if (row.status === "Shortlisted") {
-    return (
-      <>
-        <Button
-          variant="contained"
-          style={{ color: "white", backgroundColor: "lightgreen" }}
-        >
-          Accept
-        </Button>
-        <Button variant="contained" color="secondary">
-          Reject
-        </Button>
-      </>
-    );
-  }
-  return "--";
-};
-
-const application = {
+const defaultApplication = {
   name: "Guy Name",
   education: [
     {
@@ -94,7 +64,12 @@ const application = {
   status: "Applied",
 };
 
-const defaultRows = [application, application, application, application];
+const defaultRows = [
+  defaultApplication,
+  defaultApplication,
+  defaultApplication,
+  defaultApplication,
+];
 
 const defaultSort = {
   sortField: "name",
@@ -123,6 +98,7 @@ function Applications() {
           (a) => a._id === application.applicantId
         );
         let row = {
+          id: application._id,
           name: applicant.name,
           education: applicant.education,
           skills: applicant.skills,
@@ -152,6 +128,78 @@ function Applications() {
   };
 
   useEffect(getApplications, []);
+
+  const updateApplication = (applicationId, newStatus) => {
+    let url = `/api/application/${applicationId}`;
+    let data = { status: newStatus };
+    let config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": localStorage.getItem("token"),
+      },
+    };
+    axios
+      .put(url, data, config)
+      .then(() => {
+        swal(`Candidate ${newStatus}`, "", "success").then(() =>
+          location.reload()
+        );
+      })
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.data) {
+            if (error.response.data.msg) {
+              swal("Error", error.response.data.msg, "error");
+            }
+          }
+        } else {
+          swal("Error", "Something went wrong", "error");
+        }
+      });
+  };
+
+  const actionButtons = (row) => {
+    if (row.status === "Applied") {
+      return (
+        <>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => updateApplication(row.id, "Shortlisted")}
+          >
+            Shortlist
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => updateApplication(row.id, "Rejected")}
+          >
+            Reject
+          </Button>
+        </>
+      );
+    } else if (row.status === "Shortlisted") {
+      return (
+        <>
+          <Button
+            variant="contained"
+            style={{ color: "white", backgroundColor: "lightgreen" }}
+            onClick={() => updateApplication(row.id, "Accepted")}
+          >
+            Accept
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => updateApplication(row.id, "Rejected")}
+          >
+            Reject
+          </Button>
+        </>
+      );
+    }
+    return "--";
+  };
 
   const onSortChange = (e) => {
     setSort({

@@ -121,5 +121,19 @@ router.put("/:id", auth("Recruiter"), (req, res) => {
 });
 
 // Delete listing
+router.delete("/:id", auth("Recruiter"), async function (req, res) {
+  try {
+    const id = req.params.id;
+    let listing = await Listing.findByIdAndUpdate(id, { deleted: true });
+    await Application.updateMany(
+      { listingId: listing.id },
+      { status: "Deleted", closeDate: Date.now() }
+    );
+    res.json({ listing });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ msg: "Internal error" });
+  }
+});
 
 module.exports = router;

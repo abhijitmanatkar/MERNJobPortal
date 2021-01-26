@@ -15,7 +15,11 @@ function MyListings() {
     axios
       .get(url)
       .then((response) => {
-        setListings(response.data.listings);
+        setListings(
+          response.data.listings.filter((listing) => {
+            return !listing.deleted && listing.numAccepted < listing.maxPos;
+          })
+        );
       })
       .catch((error) => console.log(error));
   }, []);

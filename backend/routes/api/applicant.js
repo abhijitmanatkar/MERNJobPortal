@@ -12,6 +12,7 @@ const auth = require("../../middleware/auth");
 // Applicant model
 const Applicant = require("../../models/Applicant");
 const Application = require("../../models/Application");
+const Listing = require("../../models/Listing");
 
 // Register applicant
 router.post("/", (req, res) => {
@@ -40,12 +41,13 @@ router.post("/", (req, res) => {
               jwt.sign(
                 { id: newUser.id, type: "Applicant" },
                 jwtSecret,
-                { expiresIn: 600 },
+                { expiresIn: 3600 },
                 (err, token) => {
                   if (err) throw err;
                   res.json({
                     token,
                     user: userToSend,
+                    userType: "Applicant",
                   });
                 }
               );
@@ -92,6 +94,46 @@ router.get("/bylisting/:listingid", async function (req, res) {
     .catch((err) => {
       return res.sendStatus(400);
     });
+});
+
+// Get applicants accepted by recruiter
+router.get("/byrecruiter/:recruiterid", async function (req, res) {
+  try {
+    const recruiterId = req.params.recruiterid;
+    let listings = await Listing.find({ "recruiter.id": recruiterId });
+    const listingIds = listings.map((listing) => listing.id);
+    let applications = await Application.find({
+      listingId: { $in: listingIds },
+    });
+    applications = applications.filter(
+      (application) => application.status === "Accepted"
+    );
+    const acceptedIds = applications.map(
+      (application) => application.applicantId
+    );
+    let applicants = await Applicant.find({ _id: { $in: acceptedIds } });
+    applicants = applicants.map((applicant) => {
+      let application = applications.find(
+        (application) => application.applicantId == applicant.id
+      );
+      let listing = listings.find((l) => l.id == application.listingId);
+      return {
+        id: applicant.id,
+        name: applicant.name,
+        jobType: listing.jobType,
+        title: listing.title,
+        joiningDate: application.closeDate,
+        rating:
+          applicant.numRatings === 0
+            ? 0
+            : applicant.ratingSum / applicant.numRatings,
+      };
+    });
+    return res.json({ applicants });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ msg: "Internal error" });
+  }
 });
 
 // Update applicant

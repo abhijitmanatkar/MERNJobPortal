@@ -11,7 +11,7 @@ const ListingSchema = new Schema({
   postingDate: { type: Date, required: true, default: Date.now },
   deadlineDate: { type: Date, required: true },
   requiredSkills: [String],
-  duration: { type: Number, required: true, default: 0, min: 0, max: 5 },
+  duration: { type: Number, required: true, default: 0, min: 0, max: 6 },
   salary: { type: Number, required: true },
   numRatings: { type: Number, required: true, default: 0 },
   ratingSum: { type: Number, required: true, default: 0 },
@@ -20,6 +20,7 @@ const ListingSchema = new Schema({
     name: { type: String, required: true },
     email: { type: String, required: true },
   },
+  deleted: { type: Boolean, default: false },
 });
 
 module.exports = Listing = mongoose.model("Listing", ListingSchema);

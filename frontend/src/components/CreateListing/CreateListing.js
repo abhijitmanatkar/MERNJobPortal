@@ -188,7 +188,7 @@ function CreateListing() {
             <br />
             <TextField
               variant="outlined"
-              label="Salary"
+              label="Salary (₹)"
               name="salary"
               value={formData.salary}
               onChange={onChangeHandler}

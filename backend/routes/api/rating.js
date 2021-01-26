@@ -23,10 +23,15 @@ router.post("/applicant", auth("Recruiter"), async function (req, res) {
     await Applicant.findByIdAndUpdate(applicantId, {
       $inc: { numRatings: 1, ratingSum: value },
     });
+    rating = await rating.save();
+    return res.json({ rating });
   }
+  await Applicant.findByIdAndUpdate(applicantId, {
+    $inc: { ratingSum: value - rating.value },
+  });
   rating.value = value;
   rating = await rating.save();
-  res.json({ rating });
+  return res.json({ rating });
 });
 
 // Rate job
@@ -45,6 +50,36 @@ router.post("/listing", auth("Applicant"), async function (req, res) {
   }
   rating.value = value;
   rating = await rating.save();
+  res.json({ rating });
+});
+
+// Find job ratings by applicant
+router.get("/listing/byapplicant/:applicantid", async function (req, res) {
+  const applicantId = req.params.applicantid;
+  const ratings = await JobRating.find({ applicantId });
+  res.json({ ratings });
+});
+
+// Find applicant ratings by recruiter
+router.get("/applicant/byrecruiter/:recruiterid", async function (req, res) {
+  const recruiterId = req.params.recruiterid;
+  const ratings = await ApplicantRating.find({ recruiterId });
+  res.json({ ratings });
+});
+
+// Find job rating
+router.get("/listing/:listingid/:applicantid", async function (req, res) {
+  const applicantId = req.params.applicantid;
+  const listingId = req.params.applicantid;
+  let rating = await JobRating.findOne({ applicantId, listingId });
+  res.json({ rating });
+});
+
+// Find applicant rating
+router.get("/applicant/:applicantid/:recruiterid", async function (req, res) {
+  const applicantId = req.params.applicantid;
+  const recruiterId = req.params.recruiterid;
+  let rating = await ApplicantRating.findOne({ applicantId, recruiterId });
   res.json({ rating });
 });
 

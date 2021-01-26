@@ -135,7 +135,7 @@ function JobListing(props) {
             variant="h4"
             style={{ color: "lightgreen", marginBottom: -5 }}
           >
-            ${listing.salary}
+            ₹{listing.salary}
           </Typography>
 
           <span style={{ color: "red", fontSize: 14 }}>
