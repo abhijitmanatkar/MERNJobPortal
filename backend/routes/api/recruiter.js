@@ -17,12 +17,23 @@ const Listing = require("../../models/Listing");
 
 // Register Recruiter
 router.post("/", (req, res) => {
-  const { name, email, password, contactNo } = req.body;
+  let { name, email, password, contactNo } = req.body;
 
   if (!name || !email || !password || !contactNo)
     return res.status(400).json({ msg: "Enter all credentials" });
 
-  // TODO: Add validations
+  // Validations
+  const emailRe = /\S+@\S+\.\S+/;
+  email = email.trim();
+  if (!emailRe.test(email)) {
+    return res.status(400).json({ msg: "Invalid email" });
+  }
+
+  contactNo = contactNo.trim();
+  const phoneRe = /^[0-9]{4}$/;
+  if (!phoneRe.test(contactNo)) {
+    return res.status(400).json({ msg: "Invalid phone number" });
+  }
 
   Recruiter.findOne({ email })
     .then((user) => {
