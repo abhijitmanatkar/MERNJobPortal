@@ -4,6 +4,7 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import Chip from "@material-ui/core/Chip";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -31,6 +32,19 @@ const defaultFormData = {
   salary: 1000,
   deadlineDate: Date.now(),
 };
+
+const languageList = [
+  "Python",
+  "C",
+  "Javascript",
+  "C++",
+  "HTML",
+  "CSS",
+  "Java",
+  "Rust",
+  "Kotlin",
+  "PHP",
+];
 
 function CreateListing() {
   const [formData, setFormData] = useState(defaultFormData);
@@ -246,13 +260,19 @@ function CreateListing() {
           <Typography variant="h5">Required Skills</Typography>
           <br />
           <div className="SkillForm">
-            <TextField
-              variant="outlined"
-              label="Skill"
+            <Autocomplete
+              freeSolo
+              options={languageList}
               name="currSkill"
-              value={formData.currSkill}
-              onChange={onChangeHandler}
+              inputValue={formData.currSkill}
+              onInputChange={(e, newValue) => {
+                setFormData({ ...formData, currSkill: newValue });
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="Skill" variant="outlined" />
+              )}
             />
+
             <Button variant="contained" color="primary" onClick={addSkill}>
               Add
             </Button>

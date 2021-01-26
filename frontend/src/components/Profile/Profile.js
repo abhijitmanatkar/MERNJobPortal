@@ -7,6 +7,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import FormControl from "@material-ui/core/FormControl";
 import FormHelperText from "@material-ui/core/FormHelperText";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import Chip from "@material-ui/core/Chip";
 import IconButton from "@material-ui/core/IconButton";
 import Navbar from "../Navbar/Navbar";
@@ -42,6 +43,19 @@ const defaultFormData = {
   userType: "applicant",
 };
 */
+
+const languageList = [
+  "Python",
+  "C",
+  "Javascript",
+  "C++",
+  "HTML",
+  "CSS",
+  "Java",
+  "Rust",
+  "Kotlin",
+  "PHP",
+];
 
 function Profile() {
   const { auth, setAuth } = React.useContext(AuthContext);
@@ -308,12 +322,17 @@ function Profile() {
               <Typography variant="h4">Skills</Typography>
               <br />
               <div className="SkillForm">
-                <TextField
-                  variant="outlined"
-                  label="Skill"
+                <Autocomplete
+                  freeSolo
+                  options={languageList}
                   name="currSkill"
-                  value={formData.currSkill}
-                  onChange={onChangeHandler}
+                  inputValue={formData.currSkill}
+                  onInputChange={(e, newValue) => {
+                    setFormData({ ...formData, currSkill: newValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Skill" variant="outlined" />
+                  )}
                 />
                 <Button variant="contained" color="primary" onClick={addSkill}>
                   Add
